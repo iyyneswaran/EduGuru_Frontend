@@ -1,20 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
-import { 
-  Send, 
-  Paperclip, 
-  Image as ImageIcon, 
-  Mic, 
-  Bot, 
-  User, 
+import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
+import {
+  Send,
+  Paperclip,
+  Image as ImageIcon,
+  Mic,
+  Bot,
+  User,
   Sparkles,
   Code
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { GoogleGenAI } from "@google/genai";
+import { useAuth } from '@/context/AuthContext';
 
 interface Message {
   id: string;
@@ -31,6 +35,9 @@ const SUGGESTED_PROMPTS = [
 ];
 
 export default function AITutor() {
+  const { token } = useAuth();
+  const API_ROOT = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000').replace(/\/$/, '');
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -51,6 +58,44 @@ export default function AITutor() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    const fetchHistory = async () => {
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_ROOT}/api/chat/history`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          const historyMessages: Message[] = [];
+          const reversedChats = [...json.data].reverse();
+
+          reversedChats.forEach((chat: any) => {
+            historyMessages.push({
+              id: `user-${chat.id}`,
+              role: 'user',
+              content: chat.message,
+              timestamp: new Date(chat.createdAt)
+            });
+            historyMessages.push({
+              id: `ai-${chat.id}`,
+              role: 'ai',
+              content: chat.response,
+              timestamp: new Date(chat.createdAt)
+            });
+          });
+
+          if (historyMessages.length > 0) {
+            setMessages(historyMessages);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch history:", error);
+      }
+    };
+    fetchHistory();
+  }, [token]);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
@@ -66,30 +111,30 @@ export default function AITutor() {
     setIsLoading(true);
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    {
-                        text: "You are a helpful, encouraging, and fun AI tutor for a high school student. Keep answers concise, engaging, and use markdown for formatting. " + input
-                    }
-                ]
-            }
-        ],
+      const res = await fetch(`${API_ROOT}/api/chat/message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ message: input })
       });
 
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        throw new Error(json.message || "Failed to get response");
+      }
+
       const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: json.data?.id || (Date.now() + 1).toString(),
         role: 'ai',
-        content: response.text || "I'm having trouble thinking right now. Try again?",
-        timestamp: new Date()
+        content: json.data?.response || "I'm having trouble thinking right now. Try again?",
+        timestamp: json.data?.createdAt ? new Date(json.data.createdAt) : new Date()
       };
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error("Error calling Gemini:", error);
+      console.error("Error calling AI tutor:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
@@ -131,21 +176,21 @@ export default function AITutor() {
               animate={{ opacity: 1, y: 0 }}
               className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                msg.role === 'ai' ? 'bg-primary/20 text-primary' : 'bg-secondary text-foreground'
-              }`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'ai' ? 'bg-primary/20 text-primary' : 'bg-secondary text-foreground'
+                }`}>
                 {msg.role === 'ai' ? <Bot className="w-5 h-5" /> : <User className="w-5 h-5" />}
               </div>
-              
-              <div className={`max-w-[80%] rounded-2xl p-4 ${
-                msg.role === 'ai' 
-                  ? 'bg-card border border-border/50 text-card-foreground' 
-                  : 'bg-primary text-primary-foreground'
-              }`}>
+
+              <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'ai'
+                ? 'bg-card border border-border/50 text-card-foreground'
+                : 'bg-primary text-primary-foreground'
+                }`}>
                 <div className="prose prose-invert prose-sm max-w-none">
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm, remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
                     components={{
-                      code({node, className, children, ...props}) {
+                      code({ node, className, children, ...props }) {
                         return (
                           <code className={`${className} bg-black/30 rounded px-1 py-0.5`} {...props}>
                             {children}
@@ -163,9 +208,9 @@ export default function AITutor() {
               </div>
             </motion.div>
           ))}
-          
+
           {isLoading && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="flex gap-4"
@@ -199,7 +244,7 @@ export default function AITutor() {
               ))}
             </div>
           )}
-          
+
           <div className="flex gap-2">
             <Button variant="ghost" size="icon" className="shrink-0 text-muted-foreground hover:text-foreground">
               <Paperclip className="w-5 h-5" />
@@ -215,9 +260,9 @@ export default function AITutor() {
                 placeholder="Ask anything..."
                 className="pr-10"
               />
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:text-primary"
               >
                 <Mic className="w-4 h-4" />
