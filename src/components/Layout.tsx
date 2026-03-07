@@ -1,14 +1,14 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Bot, 
-  Map, 
-  Gamepad2, 
-  Library, 
-  Trophy, 
-  Medal, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  Bot,
+  Map,
+  Gamepad2,
+  Library,
+  Trophy,
+  Medal,
+  BarChart3,
   User,
   Search,
   Bell,
@@ -31,10 +31,9 @@ const SidebarItem = ({ to, icon: Icon, label, onClick }: { to: string; icon: any
       to={to}
       onClick={onClick}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
-          isActive
-            ? 'bg-primary/10 text-primary font-semibold'
-            : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${isActive
+          ? 'bg-primary/10 text-primary font-semibold'
+          : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
         }`
       }
     >
@@ -79,9 +78,8 @@ export default function Layout({ children }: LayoutProps) {
 
       {/* Sidebar */}
       <motion.aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-all duration-300 ease-in-out lg:translate-x-0 ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transition-all duration-300 ease-in-out lg:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
       >
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -89,7 +87,7 @@ export default function Layout({ children }: LayoutProps) {
               <span className="font-bold text-white">L</span>
             </div>
             <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-              LevelUp
+              EduGuru
             </h1>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleMobileMenu}>
