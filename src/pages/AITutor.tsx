@@ -123,7 +123,7 @@ export default function AITutor() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        throw new Error(json.message || "Failed to get response");
+        throw new Error(json.error || json.message || "Failed to get response");
       }
 
       const aiMessage: Message = {
