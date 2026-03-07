@@ -1,131 +1,127 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Lock, Star, Trophy } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-interface LevelNodeProps {
-  status: 'locked' | 'unlocked' | 'completed';
-  title: string;
-  description: string;
-  icon: React.ReactNode;
-  position: 'left' | 'right' | 'center';
-  index: number;
-}
-
-const LevelNode = ({ status, title, description, icon, position, index }: LevelNodeProps) => {
-  const isLocked = status === 'locked';
-  const isCompleted = status === 'completed';
-
-  return (
-    <div className={cn(
-      "relative flex items-center justify-center w-full py-8",
-      position === 'left' ? 'md:justify-start md:pl-32' : 
-      position === 'right' ? 'md:justify-end md:pr-32' : 'justify-center'
-    )}>
-      {/* Connecting Line (Vertical) */}
-      {index !== 0 && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1/2 w-1 bg-border -z-10" />
-      )}
-      {/* Connecting Line (Next) */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 h-1/2 w-1 bg-border -z-10" />
-
-      <motion.div
-        whileHover={!isLocked ? { scale: 1.05 } : {}}
-        className={cn(
-          "relative w-24 h-24 rounded-full flex items-center justify-center border-4 shadow-lg cursor-pointer z-10 transition-colors duration-300",
-          isLocked 
-            ? "bg-secondary border-border text-muted-foreground grayscale" 
-            : isCompleted
-              ? "bg-green-500 border-green-600 text-white shadow-green-500/30"
-              : "bg-primary border-primary-foreground text-white shadow-primary/30 animate-pulse-slow"
-        )}
-      >
-        {isCompleted && (
-          <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 rounded-full p-1 border-2 border-background">
-            <Star className="w-4 h-4 fill-current" />
-          </div>
-        )}
-        
-        <div className="w-12 h-12">
-          {isLocked ? <Lock className="w-full h-full p-2" /> : icon}
-        </div>
-
-        {/* Label Tooltip */}
-        <div className={cn(
-          "absolute top-full mt-4 w-48 p-3 rounded-xl bg-card border border-border shadow-xl text-center transition-opacity",
-          isLocked ? "opacity-50" : "opacity-100"
-        )}>
-          <h3 className="font-bold text-sm">{title}</h3>
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        </div>
-      </motion.div>
-    </div>
-  );
-};
+import { BookOpen, CheckCircle, Lock, Unlock, ChevronDown } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useClassroom } from '@/context/ClassroomContext';
+import * as api from '@/services/api';
 
 export default function LearnPath() {
-  const levels = [
-    {
-      title: "Foundations of Physics",
-      description: "Learn the basics of motion and forces.",
-      status: 'completed',
-      icon: <img src="https://api.dicebear.com/7.x/icons/svg?seed=physics" alt="icon" />,
-      position: 'center'
-    },
-    {
-      title: "Algebra I",
-      description: "Master linear equations and inequalities.",
-      status: 'completed',
-      icon: <img src="https://api.dicebear.com/7.x/icons/svg?seed=math" alt="icon" />,
-      position: 'left'
-    },
-    {
-      title: "Cell Biology",
-      description: "Understand the building blocks of life.",
-      status: 'unlocked',
-      icon: <img src="https://api.dicebear.com/7.x/icons/svg?seed=bio" alt="icon" />,
-      position: 'right'
-    },
-    {
-      title: "World History",
-      description: "Explore ancient civilizations.",
-      status: 'locked',
-      icon: <img src="https://api.dicebear.com/7.x/icons/svg?seed=history" alt="icon" />,
-      position: 'center'
-    },
-    {
-      title: "Chemistry Basics",
-      description: "Atoms, molecules, and reactions.",
-      status: 'locked',
-      icon: <img src="https://api.dicebear.com/7.x/icons/svg?seed=chem" alt="icon" />,
-      position: 'left'
+  const { classrooms, fetchClassrooms } = useClassroom();
+  const [selectedClassroom, setSelectedClassroom] = useState('');
+  const [modules, setModules] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchClassrooms();
+  }, [fetchClassrooms]);
+
+  useEffect(() => {
+    if (selectedClassroom) {
+      setLoading(true);
+      api.getModules(selectedClassroom)
+        .then(res => setModules(res.data || []))
+        .catch(console.error)
+        .finally(() => setLoading(false));
     }
-  ] as const;
+  }, [selectedClassroom]);
+
+  useEffect(() => {
+    if (classrooms.length > 0 && !selectedClassroom) {
+      setSelectedClassroom(classrooms[0].id);
+    }
+  }, [classrooms, selectedClassroom]);
+
+  async function handleComplete(moduleId: string) {
+    try {
+      await api.completeModule(selectedClassroom, moduleId);
+      const res = await api.getModules(selectedClassroom);
+      setModules(res.data || []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  const statusIcon = (status: string) => {
+    switch (status) {
+      case 'COMPLETED': return <CheckCircle className="w-5 h-5 text-green-500" />;
+      case 'UNLOCKED': return <Unlock className="w-5 h-5 text-primary" />;
+      default: return <Lock className="w-5 h-5 text-muted-foreground" />;
+    }
+  };
 
   return (
-    <div className="max-w-3xl mx-auto pb-20">
-      <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold mb-2">Your Learning Path</h1>
-        <p className="text-muted-foreground">Master topics one step at a time to earn XP and unlock new challenges.</p>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <BookOpen className="w-8 h-8 text-primary" /> Learning Path
+          </h1>
+          <p className="text-muted-foreground mt-1">Complete modules in order to unlock the next</p>
+        </div>
+        {classrooms.length > 0 && (
+          <select
+            value={selectedClassroom}
+            onChange={(e) => setSelectedClassroom(e.target.value)}
+            className="h-10 px-3 rounded-lg bg-secondary/50 border border-white/10 text-foreground outline-none focus:border-primary"
+          >
+            {classrooms.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        )}
       </div>
 
-      <div className="relative">
-        {levels.map((level, index) => (
-          <LevelNode
-            key={index}
-            index={index}
-            {...level}
-          />
-        ))}
-        
-        {/* Final Trophy */}
-        <div className="relative flex items-center justify-center w-full py-8">
-           <div className="absolute top-0 left-1/2 -translate-x-1/2 h-1/2 w-1 bg-border -z-10" />
-           <div className="w-32 h-32 rounded-full bg-secondary/30 border-4 border-dashed border-border flex items-center justify-center text-muted-foreground">
-              <Trophy className="w-12 h-12" />
-           </div>
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+      ) : modules.length === 0 ? (
+        <Card><CardContent className="p-8 text-center text-muted-foreground">No modules in this classroom yet.</CardContent></Card>
+      ) : (
+        <div className="relative">
+          {/* Vertical line */}
+          <div className="absolute left-[23px] top-6 bottom-6 w-0.5 bg-border" />
+
+          <div className="space-y-4">
+            {modules.map((m, i) => (
+              <motion.div
+                key={m.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="flex gap-4"
+              >
+                {/* Timeline dot */}
+                <div className="relative z-10 mt-5 flex-shrink-0">
+                  <div className={`w-[14px] h-[14px] rounded-full border-2 ${m.status === 'COMPLETED' ? 'bg-green-500 border-green-500' : m.status === 'UNLOCKED' ? 'bg-primary border-primary' : 'bg-muted border-muted-foreground/30'}`} />
+                </div>
+
+                <Card className={`flex-1 ${m.status === 'LOCKED' ? 'opacity-50' : ''}`}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {statusIcon(m.status)}
+                        <div>
+                          <h3 className="font-bold">Module {i + 1}: {m.title}</h3>
+                          {m.description && <p className="text-sm text-muted-foreground mt-0.5">{m.description}</p>}
+                        </div>
+                      </div>
+                      <Badge variant={m.status === 'COMPLETED' ? 'default' : m.status === 'UNLOCKED' ? 'secondary' : 'outline'}>
+                        {m.status === 'COMPLETED' ? '✓ Done' : m.status === 'UNLOCKED' ? 'Active' : 'Locked'}
+                      </Badge>
+                    </div>
+                    {m.status === 'UNLOCKED' && (
+                      <Button size="sm" className="mt-3" onClick={() => handleComplete(m.id)}>
+                        Mark Complete
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

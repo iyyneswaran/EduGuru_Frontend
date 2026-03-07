@@ -1,129 +1,83 @@
 import React from 'react';
-import { User, Mail, MapPin, Calendar, Edit2, Settings } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { motion } from 'framer-motion';
+import { User, Mail, Calendar, Shield, Flame, Trophy } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Profile() {
+  const { user, logout } = useAuth();
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="relative">
-        {/* Cover Image */}
-        <div className="h-48 w-full bg-gradient-to-r from-primary to-purple-600 rounded-2xl opacity-80"></div>
-        
-        {/* Profile Info Overlay */}
-        <div className="absolute -bottom-12 left-8 flex items-end gap-6">
-          <div className="w-32 h-32 rounded-full border-4 border-background bg-background overflow-hidden shadow-xl">
-            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Profile" className="w-full h-full" />
+    <div className="space-y-6 max-w-2xl mx-auto">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+        <p className="text-muted-foreground mt-1">Your account information</p>
+      </motion.div>
+
+      {/* Avatar Card */}
+      <Card className="bg-gradient-to-r from-primary/10 to-cyan-500/10 border-primary/20">
+        <CardContent className="p-8 flex flex-col items-center">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-primary to-cyan-400 p-[3px] mb-4">
+            <div className="w-full h-full rounded-full bg-background overflow-hidden">
+              <img
+                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`}
+                alt="Avatar"
+                className="w-full h-full"
+              />
+            </div>
           </div>
-          <div className="mb-2">
-            <h1 className="text-3xl font-bold text-white drop-shadow-md">Alex Johnson</h1>
-            <p className="text-white/80 font-medium">Level 15 • Science Enthusiast</p>
-          </div>
-        </div>
-        
-        <div className="absolute top-4 right-4">
-          <Button variant="secondary" size="sm" className="gap-2">
-            <Edit2 className="w-4 h-4" /> Edit Cover
-          </Button>
-        </div>
+          <h2 className="text-2xl font-bold">{user?.name || 'Student'}</h2>
+          <Badge variant="secondary" className="mt-2">{user?.role || 'STUDENT'}</Badge>
+        </CardContent>
+      </Card>
+
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500"><Mail className="w-5 h-5" /></div>
+            <div>
+              <p className="text-sm text-muted-foreground">Email</p>
+              <p className="font-medium">{user?.email || '—'}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-purple-500/10 rounded-xl text-purple-500"><Shield className="w-5 h-5" /></div>
+            <div>
+              <p className="text-sm text-muted-foreground">Role</p>
+              <p className="font-medium capitalize">{user?.role?.toLowerCase() || 'student'}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-orange-500/10 rounded-xl text-orange-500"><Flame className="w-5 h-5" /></div>
+            <div>
+              <p className="text-sm text-muted-foreground">Streak</p>
+              <p className="font-medium">{user?.streak || 0} days</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5 flex items-center gap-4">
+            <div className="p-3 bg-yellow-500/10 rounded-xl text-yellow-500"><Trophy className="w-5 h-5" /></div>
+            <div>
+              <p className="text-sm text-muted-foreground">Total XP</p>
+              <p className="font-medium">{user?.xp || 0} XP</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 pt-6">
-        {/* Left Column */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">About</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Mail className="w-4 h-4" />
-                <span>alex.johnson@example.com</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span>San Francisco, CA</span>
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>Joined September 2023</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Interests</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Badge variant="secondary">Physics</Badge>
-              <Badge variant="secondary">Calculus</Badge>
-              <Badge variant="secondary">History</Badge>
-              <Badge variant="secondary">Coding</Badge>
-              <Badge variant="secondary">Space</Badge>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Account Settings</CardTitle>
-              <Button variant="ghost" size="icon">
-                <Settings className="w-5 h-5" />
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Username</label>
-                  <Input defaultValue="alex_j" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Display Name</label>
-                  <Input defaultValue="Alex Johnson" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <Input defaultValue="alex.johnson@example.com" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Grade Level</label>
-                  <Input defaultValue="10th Grade" />
-                </div>
-              </div>
-              <div className="pt-4 flex justify-end">
-                <Button>Save Changes</Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Learning Goals</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-                <div>
-                  <p className="font-medium">Master Physics Mechanics</p>
-                  <p className="text-xs text-muted-foreground">Due in 2 weeks</p>
-                </div>
-                <Badge variant="outline" className="text-yellow-500 border-yellow-500/50">In Progress</Badge>
-              </div>
-              <div className="flex items-center justify-between p-3 border border-border rounded-lg">
-                <div>
-                  <p className="font-medium">Complete Algebra II</p>
-                  <p className="text-xs text-muted-foreground">Due in 1 month</p>
-                </div>
-                <Badge variant="outline" className="text-blue-500 border-blue-500/50">Started</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <button
+        onClick={logout}
+        className="w-full p-3 rounded-xl border border-destructive/20 text-destructive hover:bg-destructive/10 transition-colors font-medium"
+      >
+        Sign Out
+      </button>
     </div>
   );
 }

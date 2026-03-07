@@ -14,12 +14,14 @@ import {
   Bell,
   Flame,
   Menu,
-  X
+  X,
+  School
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Progress } from './ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,15 +48,22 @@ const SidebarItem = ({ to, icon: Icon, label, onClick }: { to: string; icon: any
 export default function Layout({ children }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
+  const { user } = useAuth();
 
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
+  const xp = user?.xp || 0;
+  const streak = user?.streak || 0;
+  const level = Math.floor(xp / 500) + 1;
+  const levelProgress = (xp % 500) / 500 * 100;
+
   const navItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/tutor', icon: Bot, label: 'AI Tutor' },
-    { to: '/learn', icon: Map, label: 'Learn Path' },
-    { to: '/quiz', icon: Gamepad2, label: 'Quiz Arena' },
-    { to: '/materials', icon: Library, label: 'Study Materials' },
+    { to: '/classrooms', icon: School, label: 'Classrooms' },
+    { to: '/ai-tutor', icon: Bot, label: 'AI Tutor' },
+    { to: '/learn-path', icon: Map, label: 'Learn Path' },
+    { to: '/quiz-arena', icon: Gamepad2, label: 'Quiz Arena' },
+    { to: '/study-materials', icon: Library, label: 'Study Materials' },
     { to: '/leaderboard', icon: Trophy, label: 'Leaderboard' },
     { to: '/achievements', icon: Medal, label: 'Achievements' },
     { to: '/progress', icon: BarChart3, label: 'Progress' },
@@ -125,16 +134,16 @@ export default function Layout({ children }: LayoutProps) {
           <div className="flex items-center gap-4 lg:gap-6">
             <div className="hidden sm:flex items-center gap-2 bg-secondary/50 px-3 py-1.5 rounded-full border border-white/5">
               <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
-              <span className="text-sm font-bold text-orange-500">12</span>
+              <span className="text-sm font-bold text-orange-500">{streak}</span>
               <span className="text-xs text-muted-foreground">Day Streak</span>
             </div>
 
             <div className="hidden md:flex flex-col w-32 gap-1">
               <div className="flex justify-between text-xs">
-                <span className="font-medium text-primary">Lvl 5</span>
-                <span className="text-muted-foreground">1,250 XP</span>
+                <span className="font-medium text-primary">Lvl {level}</span>
+                <span className="text-muted-foreground">{xp.toLocaleString()} XP</span>
               </div>
-              <Progress value={65} className="h-2" />
+              <Progress value={levelProgress} className="h-2" />
             </div>
 
             <Button variant="ghost" size="icon" className="relative">
@@ -144,7 +153,7 @@ export default function Layout({ children }: LayoutProps) {
 
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-cyan-400 p-[2px]">
               <div className="w-full h-full rounded-full bg-background flex items-center justify-center overflow-hidden">
-                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User" className="w-full h-full" />
+                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'user'}`} alt="User" className="w-full h-full" />
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, UserPlus, Eye, EyeOff, User, Sparkles } from 'lucide-react';
+import { Mail, Lock, UserPlus, Eye, EyeOff, User, Sparkles, GraduationCap, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/context/AuthContext';
@@ -11,6 +11,7 @@ export default function Signup() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [role, setRole] = useState<'STUDENT' | 'TEACHER'>('STUDENT');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -41,8 +42,8 @@ export default function Signup() {
         setIsLoading(true);
 
         try {
-            await signup(normalizedName, normalizedEmail, password);
-            navigate('/');
+            await signup(normalizedName, normalizedEmail, password, role);
+            navigate(role === 'TEACHER' ? '/admin' : '/');
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please try again.');
         } finally {
@@ -146,7 +147,6 @@ export default function Signup() {
                             Create Account
                         </h1>
                         <p className="text-muted-foreground text-sm mt-1">Start your learning journey today</p>
-                        <p className="text-muted-foreground/80 text-xs mt-2">Required fields: Name, Email, Password</p>
                     </motion.div>
 
                     {/* Error */}
@@ -162,6 +162,39 @@ export default function Signup() {
 
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        {/* Role Selector */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.25 }}
+                        >
+                            <label className="text-sm font-medium text-foreground/80 mb-2 block">I am a *</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setRole('STUDENT')}
+                                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${role === 'STUDENT'
+                                            ? 'border-accent bg-accent/10 text-accent shadow-lg shadow-accent/10'
+                                            : 'border-white/10 bg-secondary/30 text-muted-foreground hover:border-white/20'
+                                        }`}
+                                >
+                                    <GraduationCap className="w-5 h-5" />
+                                    <span className="font-semibold text-sm">Student</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setRole('TEACHER')}
+                                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all duration-200 ${role === 'TEACHER'
+                                            ? 'border-primary bg-primary/10 text-primary shadow-lg shadow-primary/10'
+                                            : 'border-white/10 bg-secondary/30 text-muted-foreground hover:border-white/20'
+                                        }`}
+                                >
+                                    <BookOpen className="w-5 h-5" />
+                                    <span className="font-semibold text-sm">Teacher</span>
+                                </button>
+                            </div>
+                        </motion.div>
+
                         {fields.map((field) => (
                             <motion.div
                                 key={field.id}

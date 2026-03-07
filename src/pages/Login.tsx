@@ -12,7 +12,7 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, user } = useAuth();
     const navigate = useNavigate();
 
     async function handleSubmit(e: React.FormEvent) {
@@ -22,13 +22,23 @@ export default function Login() {
 
         try {
             await login(email.trim().toLowerCase(), password);
-            navigate('/');
+            // Redirect will happen in useEffect below after user state updates
         } catch (err: any) {
             setError(err.message || 'Login failed. Please try again.');
-        } finally {
             setIsLoading(false);
         }
     }
+
+    // Redirect after user state is set
+    React.useEffect(() => {
+        if (user) {
+            if (user.role === 'TEACHER') {
+                navigate('/admin', { replace: true });
+            } else {
+                navigate('/', { replace: true });
+            }
+        }
+    }, [user, navigate]);
 
     return (
         <div className="min-h-screen bg-background relative flex items-center justify-center px-4 overflow-hidden">
@@ -82,7 +92,6 @@ export default function Login() {
                             Welcome Back
                         </h1>
                         <p className="text-muted-foreground text-sm mt-1">Sign in to continue learning</p>
-                        <p className="text-muted-foreground/80 text-xs mt-2">Required fields: Email and Password</p>
                     </motion.div>
 
                     {/* Error */}

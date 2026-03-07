@@ -8,6 +8,9 @@ interface User {
     id: string;
     name: string;
     email: string;
+    role: 'STUDENT' | 'TEACHER';
+    xp?: number;
+    streak?: number;
 }
 
 interface ApiResponse {
@@ -23,7 +26,7 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    signup: (name: string, email: string, password: string) => Promise<void>;
+    signup: (name: string, email: string, password: string, role: 'STUDENT' | 'TEACHER') => Promise<void>;
     logout: () => void;
 }
 
@@ -85,7 +88,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(data.token);
 
         try {
-            // Fetch user profile after login
             const profileRes = await fetch(`${API_BASE}/profile`, {
                 headers: { Authorization: `Bearer ${data.token}` },
             });
@@ -101,11 +103,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    async function signup(name: string, email: string, password: string) {
+    async function signup(name: string, email: string, password: string, role: 'STUDENT' | 'TEACHER') {
         const res = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password }),
+            body: JSON.stringify({ name, email, password, role }),
         });
 
         const data = await readJson(res);

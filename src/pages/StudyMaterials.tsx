@@ -1,68 +1,85 @@
-import React from 'react';
-import { FileText, File, Plus, MoreVertical, Search } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, Video, BookOpen, ExternalLink } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useClassroom } from '@/context/ClassroomContext';
+import * as api from '@/services/api';
 
 export default function StudyMaterials() {
-  const materials = [
-    { title: 'Physics Chapter 1 Notes', type: 'Note', date: '2 days ago', tag: 'Physics' },
-    { title: 'Calculus Cheat Sheet', type: 'PDF', date: '1 week ago', tag: 'Math' },
-    { title: 'History Timeline', type: 'Image', date: '3 days ago', tag: 'History' },
-    { title: 'Biology Flashcards', type: 'Deck', date: 'Yesterday', tag: 'Biology' },
-    { title: 'Chemistry Lab Report', type: 'Doc', date: '2 weeks ago', tag: 'Chemistry' },
-  ];
+  const { classrooms, fetchClassrooms } = useClassroom();
+  const [selectedClassroom, setSelectedClassroom] = useState('');
+  const [materials, setMaterials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => { fetchClassrooms(); }, [fetchClassrooms]);
+
+  useEffect(() => {
+    if (classrooms.length > 0 && !selectedClassroom) {
+      setSelectedClassroom(classrooms[0].id);
+    }
+  }, [classrooms, selectedClassroom]);
+
+  useEffect(() => {
+    if (selectedClassroom) {
+      setLoading(true);
+      api.getMaterials(selectedClassroom)
+        .then(res => setMaterials(res.data || []))
+        .catch(console.error)
+        .finally(() => setLoading(false));
+    }
+  }, [selectedClassroom]);
+
+  const typeIcons: Record<string, any> = { PDF: FileText, VIDEO: Video, NOTES: BookOpen };
+  const typeColors: Record<string, string> = { PDF: 'bg-red-500/10 text-red-500', VIDEO: 'bg-blue-500/10 text-blue-500', NOTES: 'bg-green-500/10 text-green-500' };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Study Materials</h1>
-          <p className="text-muted-foreground">Organize your notes, PDFs, and flashcards.</p>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <BookOpen className="w-8 h-8 text-primary" /> Study Materials
+          </h1>
+          <p className="text-muted-foreground mt-1">Access materials shared by your teacher</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search materials..." className="pl-10" />
-          </div>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" /> Upload
-          </Button>
-        </div>
+        {classrooms.length > 0 && (
+          <select value={selectedClassroom} onChange={(e) => setSelectedClassroom(e.target.value)} className="h-10 px-3 rounded-lg bg-secondary/50 border border-white/10 text-foreground outline-none focus:border-primary">
+            {classrooms.map(c => (<option key={c.id} value={c.id}>{c.name}</option>))}
+          </select>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {materials.map((item, i) => (
-          <Card key={i} className="group hover:border-primary/50 transition-colors cursor-pointer">
-            <CardContent className="p-6">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-3 bg-secondary rounded-lg group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                  {item.type === 'PDF' ? <File className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </div>
-              <h3 className="font-semibold mb-2 group-hover:text-primary transition-colors">{item.title}</h3>
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{item.date}</span>
-                <Badge variant="secondary">{item.tag}</Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        
-        {/* Add New Card */}
-        <Card className="border-dashed border-2 hover:border-primary/50 transition-colors cursor-pointer flex items-center justify-center bg-transparent">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
-              <Plus className="w-6 h-6 text-muted-foreground" />
-            </div>
-            <h3 className="font-semibold text-muted-foreground">Create New</h3>
-          </CardContent>
-        </Card>
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" /></div>
+      ) : materials.length === 0 ? (
+        <Card><CardContent className="p-8 text-center text-muted-foreground">No study materials available for this classroom yet.</CardContent></Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {materials.map((m, i) => {
+            const Icon = typeIcons[m.type] || FileText;
+            const colors = typeColors[m.type] || 'bg-secondary text-foreground';
+            return (
+              <motion.div key={m.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                <Card className="h-full hover:border-primary/50 transition-colors">
+                  <CardContent className="p-5 flex flex-col h-full">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className={`p-2.5 rounded-xl ${colors}`}><Icon className="w-5 h-5" /></div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold truncate">{m.title}</h3>
+                        <Badge variant="outline" className="text-xs mt-1">{m.type}</Badge>
+                      </div>
+                    </div>
+                    {m.description && <p className="text-sm text-muted-foreground mb-3">{m.description}</p>}
+                    <a href={m.fileUrl} target="_blank" rel="noopener noreferrer" className="mt-auto flex items-center gap-1 text-primary text-sm font-medium hover:underline">
+                      Open <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
