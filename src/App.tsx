@@ -4,7 +4,7 @@ import { ClassroomProvider } from '@/context/ClassroomContext';
 import Layout from '@/components/Layout';
 import AdminLayout from '@/components/AdminLayout';
 
-// Student pages
+import Landing from '@/pages/landing/Landing';
 import Dashboard from '@/pages/Dashboard';
 import AITutor from '@/pages/AITutor';
 import LearnPath from '@/pages/LearnPath';
@@ -58,7 +58,7 @@ function GuestRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading, user } = useAuth();
   if (isLoading) return <LoadingScreen />;
   if (isAuthenticated) {
-    return <Navigate to={user?.role === 'TEACHER' ? '/admin' : '/'} replace />;
+    return <Navigate to={user?.role === 'TEACHER' ? '/admin' : '/dashboard'} replace />;
   }
   return <>{children}</>;
 }
@@ -81,8 +81,11 @@ function App() {
             <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
             <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
 
+            {/* Public landing */}
+            <Route path="/" element={<Landing />} />
+
             {/* Student routes */}
-            <Route path="/" element={<StudentRoute><Layout><Dashboard /></Layout></StudentRoute>} />
+            <Route path="/dashboard" element={<StudentRoute><Layout><Dashboard /></Layout></StudentRoute>} />
             <Route path="/ai-tutor" element={<StudentRoute><Layout><AITutor /></Layout></StudentRoute>} />
             <Route path="/learn-path" element={<StudentRoute><Layout><LearnPath /></Layout></StudentRoute>} />
             <Route path="/quiz-arena" element={<StudentRoute><Layout><QuizArena /></Layout></StudentRoute>} />

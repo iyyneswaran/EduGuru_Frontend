@@ -58,7 +58,7 @@ export default function Layout({ children }: LayoutProps) {
   const levelProgress = (xp % 500) / 500 * 100;
 
   const navItems = [
-    { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/classrooms', icon: School, label: 'Classrooms' },
     { to: '/ai-tutor', icon: Bot, label: 'AI Tutor' },
     { to: '/learn-path', icon: Map, label: 'Learn Path' },
